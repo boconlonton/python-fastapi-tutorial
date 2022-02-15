@@ -1,10 +1,15 @@
 """Contains controllers for the application"""
 from typing import Optional
+from typing import List
 
 from fastapi import APIRouter
 from fastapi import Query
+from fastapi import Body
+from fastapi import Cookie
+from fastapi import Header
 
 from app.models.items import Item
+from app.models.items import Image
 
 from app.models.users import User
 
@@ -14,6 +19,17 @@ router = APIRouter(
     tags=["items"],
     responses={404: {"description": "Not found"}},
 )
+
+
+@router.get("/")
+async def read_items(ads_id: Optional[str] = Cookie(None),
+                     user_agent: Optional[str] = Header(None),
+                     host: Optional[str] = Header(None)):
+    return {
+        "ads_id": ads_id,
+        "User-Agent": user_agent,
+        "Host": host
+    }
 
 
 @router.get("/{item_id}")
@@ -39,12 +55,23 @@ async def create_item(item: Item):
     return item
 
 
-@router.put("/items/{item_id}")
+@router.put("/{item_id}")
 async def update_item(item_id: int,
                       item: Item,
                       user: User,
-                      q: Optional[str] = None):
-    result = {"item_id": item_id, "user": user, **item.dict()}
+                      q: Optional[str] = None,
+                      importance: int = Body(...)):
+    result = {
+        "item_id": item_id,
+        "user": user,
+        "importance": importance,
+        **item.dict()
+    }
     if q:
         result.update({"q": q})
     return result
+
+
+@router.post("/images/multiple/")
+async def create_multiple_images(images: List[Image]):
+    return images
